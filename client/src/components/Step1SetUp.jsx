@@ -6,9 +6,13 @@ import {
     FaMicrophoneAlt
 } from "react-icons/fa";
 import { ServerUrl } from '../App';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUserData } from '../redux/userSlice';
 
 const Step1SetUp = ({ onStart }) => {
 
+    const {userData} = useSelector((state) => state.user);
+    const dispatch = useDispatch(); 
     const [role, setRole] = useState("");
     const [experience, setExperience] = useState("");
     const [mode, setMode] = useState("Technical");
@@ -18,6 +22,7 @@ const Step1SetUp = ({ onStart }) => {
     const [resumeText, setResumeText] = useState("");
     const [analysisDone, setAnalysisDone] = useState(false);
     const [analyzing, setAnalyzing] = useState(false);
+    const [loading , setLoading] = useState(false)
 
     const handleResumeUpload = async () => {
         if (!resumeFile || analyzing) return;
@@ -46,6 +51,23 @@ const Step1SetUp = ({ onStart }) => {
             setAnalyzing(false);
         }
     };
+
+    const handleStart = async () =>{
+        setLoading(true)
+        try {
+            const result = await axios.post(ServerUrl + "/api/interview/generate-questions" , {role , experience , mode , resumeText, projects, skills}, {withCredentials:true})
+            console.log(result.data)
+            if(userData){
+                dispatch(setUserData({...userData , credits:result.data.creditsLeft}))
+            }
+
+            setLoading(false)
+            onStart?.(result.data)
+        } catch (error) {
+            console.log(error)
+            setLoading(false)
+        }
+    }
 
     return (
         <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 px-4'>
@@ -187,11 +209,11 @@ const Step1SetUp = ({ onStart }) => {
 
                         {/* START BUTTON */}
                         <button
-                            disabled={!role || !experience}
-                            onClick={() => onStart({ role, experience, mode, skills })}
-                            className='w-full disabled:bg-gray-400 bg-green-600 hover:bg-green-700 text-white py-3 rounded-full text-lg font-semibold'
+                        onClick={handleStart}
+                            disabled={!role || !experience || loading}
+                            className='w-full disabled:bg-gray-400 bg-green-600 hover:bg-green-700 text-white py-3 rounded-full text-lg font-semibold transition duration-300 shadow-md'
                         >
-                            Start Interview
+                            {loading ? "Starting..." : "Start Interview"}
                         </button>
 
                     </div>

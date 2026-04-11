@@ -9,20 +9,22 @@ import { ServerUrl } from '../App';
 import axios from 'axios'
 import { useDispatch } from 'react-redux';
 import { setUserData } from '../redux/userSlice';
+import { useNavigate } from 'react-router-dom';
 
 const Auth = ({isModel = false}) => {
 
     const dispatch = useDispatch()
+    const navigate = useNavigate()
 
     const handleGoogleAuth = async () =>{
         try {
             const response = await signInWithPopup(auth , provider)
-             let User = response.user
-             let name = User.displayName
-             let email = User.email
-             const result = await axios.post(ServerUrl + "/api/auth/google" , {
-                email , name } , {WithCredentials:true})
-                dispatch(setUserData(result.data))
+            const User = response.user
+            const name = User.displayName
+            const email = User.email
+            const result = await axios.post(ServerUrl + "/api/auth/google", { email, name }, { withCredentials: true })
+            dispatch(setUserData(result.data))
+            navigate('/')
 
         } catch (error) {
            console.log(error)

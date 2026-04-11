@@ -1,85 +1,81 @@
-import User from "../models/user.model";
-import Interview from "../models/interview.model";
+import User from "../models/user.model.js";
+import Interview from "../models/interview.model.js";
+import fs from "fs"
+// import * as pdf from "pdf-parse";
 
-export const analyzeResume = async (req ,res) =>{
+
+// import fs from "fs";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const pdfModule = require("pdf-parse");
+const pdf = pdfModule.default || pdfModule;
+
+export const analyzeResume = async (req, res) => {
     try {
-        if(!req.file){
-            return res.status(400).json({message:"Resume required"});
+        if (!req.file) {
+            return res.status(400).json({ message: "Resume required" });
         }
 
-        const filePath = req.file.path
+        const filePath = req.file.path;
 
-        const fileBuffer = await fs.promises.readFile(filePath)
-        const unit8Array = new Unit8Array(fileBuffer)
+        const fileBuffer = await fs.promises.readFile(filePath);
 
-        const pdfjs = await pdfjsLib.getDocument({data:unit8Array}).promise;
+        // ✅ FIXED HERE
+        const data = await pdf(fileBuffer);
 
-        let resumeText = "";
-
-        // Extract text from all pages
-
-        for(let pageNum = 1; pageNum => pdfjs.numPages; pageNum++){
-            const page = await pdfjs.getPage(pageNum);
-            const content = await page.getTextContent();
-
-            const pageText = content.items.map(item => item.str).join(" ");
-            resumeText += pageText + "\n";
-        }
-
-        resumeText = resumeText.replace(/\s+/g," ").trim();
-
+        let resumeText = data.text;
+        resumeText = resumeText.replace(/\s+/g, " ").trim();
 
         const messages = [
             {
-                role:"system",
-                content:`
-                Extract structured data from resume.
-                
-                Return strictly JSON:
+                role: "system",
+                content: `
+Extract structured data from resume.
 
-                {
-                "role":"string",
-                "experience":"string",
-                "projects":["project1" , "project2"],
-                "skills": ["skill1" ,"skill2"]
-                }
-                `
-
+Return strictly JSON:
+{
+"role":"string",
+"experience":"string",
+"projects":["project1","project2"],
+"skills":["skill1","skill2"]
+}
+`
             },
-
             {
-                role:"user",
-                content:resumeText
+                role: "user",
+                content: resumeText
             }
         ];
 
-        const aiResponse = await askAi(messages)
-        const parsed = JSON.parse(aiResponse)
+        const aiResponse = await askAi(messages);
+        const parsed = JSON.parse(aiResponse);
 
-        fs.unlinkSync(filePath)
+        fs.unlinkSync(filePath);
 
-        res.json({
-            role:parsed.role,
-            experience:parsed.experience,
-            projects:parsed.projects,
-            skills:parsed.skills,
+        return res.json({
+            role: parsed.role,
+            experience: parsed.experience,
+            projects: parsed.projects,
+            skills: parsed.skills,
             resumeText
-        })
+        });
+
     } catch (error) {
         console.log(error);
 
-        if(req.file && fs.existsSync(req.file.path)){
+        if (req.file && fs.existsSync(req.file.path)) {
             fs.unlinkSync(req.file.path);
         }
 
-        return res.status(500).json({message:error.message})
+        return res.status(500).json({ message: error.message });
     }
-}
+};
 
 
 export const generateQuestion = async (req,res) =>{
     try {
-        const {role,experience,mode,resumeText,projects,skills} = req.body
+        let {role,experience,mode,resumeText,projects,skills} = req.body
 
         role = role?.trim()
         experience = experience?.trim()
@@ -318,7 +314,7 @@ Answer: ${answer}
 }
 
 
-export const finishIntervew = async(req,res) =>{
+export const finishInterview = async(req,res) =>{
     try {
         const [interviewId] = req.body
         const interview = await Interview.findById(interviewId);
@@ -331,8 +327,42 @@ export const finishIntervew = async(req,res) =>{
 
         let totalScore = 0;
         let totalConfidence = 0;
-        
+        let totalCommunication = 0;
+        let totalCorrectness = 0;
+
+        interview.question.forEach((q) =>{
+            totalScore += q.score || 0;
+            totalConfidence += q.confidence || 0;
+            totalCommunication += q.communication || 0;
+            totalCorrectness += q.correctness || 0;
+        });
+
+        const finalScore = totalQuestions ? totalScore / totalQuestions : 0;
+        const avgConfidence = totalQuestions ? totalConfidence / totalQuestions : 0;
+        const avgCommunication = totalQuestions ? totalCommunication / totalQuestions : 0;
+        const avgCorrectness = totalQuestions ? totalCorrectness / totalQuestions : 0;
+
+        interview.finalScore = finalScore;
+        interview.status = "completed";
+
+        await interview.save();
+
+        return res.status(200).json({
+            finalScore:Number(finalScore.toFixed(1)),
+            confidence:Number(avgConfidence.toFixed(1)),
+            communication:Number(avgCommunication.toFixed(1)),
+            correctness: Number(avgCorrectness.toFixed(1)),
+            questionWiseScore: interview.questions.map((q) => ({
+                question:q.question,
+                score:q.score || 0,
+                feedback: q.feedback || "",
+                confidence: q.confidence || 0,
+                communication: q.communication || 0,
+                correctness: q.correctness || 0,
+            })),
+        })
+
     } catch (error) {
-        
+         return res.status(500).json({message:`failed to finish Interview ${error}`})
     }
 }

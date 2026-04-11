@@ -10,7 +10,6 @@ import { BsRobot,
  import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthModel from '../components/AuthModel'
-import Step1SetUp from '../components/Step1SetUp'
 // import evalImg from "../assets/ai-ans.png"
 // import techImg from "../assets/tech.png"
 
@@ -20,13 +19,12 @@ const Home = () => {
 
 
   const {userData} = useSelector((state) => state.user)
-  const[showAuth , setShowAuth] = useState(false)
+  const [showAuth , setShowAuth] = useState(false)
   const navigate = useNavigate()
   return (
 
     <div className='min-h-screen bg-[#f3f3f3] flex flex-col'>
      <Navbar />
-     <Step1SetUp />
      <div className='flex-1 px-6 py-20'>
       <div className='flex justify-center mb-6'>
         <div className='bg-gray-100 text-gray-600 text-sm px-4 py-2 rounded-full flex items-center gap-2'>
