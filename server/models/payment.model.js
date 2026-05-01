@@ -1,5 +1,5 @@
 import mongoose from "mongoose"
-import User from "./user.model"
+import User from "./user.model.js"
 const paymentSchema = new mongoose.Schema({
 userId:{
     type:mongoose.Schema.Types.ObjectId,
@@ -14,7 +14,11 @@ razorpayOrderId:String,
 
 status:{
     type:String,
-    enum:["created" , "paod" , "failed"],
+    enum:["created" , "paid" , "failed"],
     default:"created",
 }
 },{timestamps:true})
+
+const Payment = mongoose.model("Payment" , paymentSchema)
+
+export default Payment

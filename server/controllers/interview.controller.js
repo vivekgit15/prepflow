@@ -1,44 +1,72 @@
 import User from "../models/user.model.js";
 import Interview from "../models/interview.model.js";
 import fs from "fs"
-// import * as pdf from "pdf-parse";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+import { askAi } from "../services/openRouter.services.js";
+import path from "path";
+
+pdfjsLib.GlobalWorkerOptions.standardFontDataUrl = path.join(
+    process.cwd(),
+    "node_modules/pdfjs-dist/standard_fonts/"
+);
 
 
 // import fs from "fs";
-import { createRequire } from "module";
+// import { createRequire } from "module";
 
-const require = createRequire(import.meta.url);
-const pdfModule = require("pdf-parse");
-const pdf = pdfModule.default || pdfModule;
+// const require = createRequire(import.meta.url);
+// const pdfModule = require("pdf-parse");
+// const pdf = pdfModule.default || pdfModule;
 
 export const analyzeResume = async (req, res) => {
+    let filePath = "";
+
     try {
+        console.log("File:", req.file);
+
         if (!req.file) {
             return res.status(400).json({ message: "Resume required" });
         }
 
-        const filePath = req.file.path;
+        filePath = req.file.path;
 
+        // Read file
         const fileBuffer = await fs.promises.readFile(filePath);
+        const uint8Array = new Uint8Array(fileBuffer);
 
-        // ✅ FIXED HERE
-        const data = await pdf(fileBuffer);
+        // Load PDF
+        const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise;
 
-        let resumeText = data.text;
+        let resumeText = "";
+
+        // Extract text from all pages
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const content = await page.getTextContent();
+
+            const pageText = content.items.map(item => item.str).join(" ");
+            resumeText += pageText + "\n";
+        }
+
+        // Clean text
         resumeText = resumeText.replace(/\s+/g, " ").trim();
 
+        // AI prompt
         const messages = [
             {
                 role: "system",
                 content: `
-Extract structured data from resume.
+Extract structured data from the resume.
 
-Return strictly JSON:
+Return ONLY valid JSON.
+Do NOT include markdown, backticks, or explanations.
+
+Format:
 {
-"role":"string",
-"experience":"string",
-"projects":["project1","project2"],
-"skills":["skill1","skill2"]
+  "role": "string",
+  "experience": "string",
+  "projects": ["project1", "project2"],
+  "skills": ["skill1", "skill2"]
 }
 `
             },
@@ -48,30 +76,53 @@ Return strictly JSON:
             }
         ];
 
+        // Call AI
         const aiResponse = await askAi(messages);
-        const parsed = JSON.parse(aiResponse);
 
-        fs.unlinkSync(filePath);
+        // Clean + parse AI response
+        let parsed;
+        try {
+            const cleaned = aiResponse
+                .replace(/```json/g, "")
+                .replace(/```/g, "")
+                .trim();
 
+            parsed = JSON.parse(cleaned);
+
+        } catch (err) {
+            console.error("JSON Parse Error:", err.message);
+            console.log("Raw AI Response:", aiResponse);
+
+            return res.status(500).json({
+                message: "Invalid JSON returned from AI",
+                raw: aiResponse
+            });
+        }
+
+        // Send response
         return res.json({
-            role: parsed.role,
-            experience: parsed.experience,
-            projects: parsed.projects,
-            skills: parsed.skills,
+            role: parsed.role || "",
+            experience: parsed.experience || "",
+            projects: parsed.projects || [],
+            skills: parsed.skills || [],
             resumeText
         });
 
     } catch (error) {
-        console.log(error);
+        console.error("Server Error:", error);
 
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
+        return res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message
+        });
+
+    } finally {
+        // Always delete uploaded file
+        if (filePath && fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
         }
-
-        return res.status(500).json({ message: error.message });
     }
 };
-
 
 export const generateQuestion = async (req,res) =>{
     try {
@@ -212,6 +263,16 @@ export const submitAnswer = async(req,res) =>{
         const {interviewId , questionIndex , answer , timeTaken} = req.body
         const interview = await Interview.findById(interviewId);
 
+        if(!interview){
+            return res.status(400).json({message:"Interview not found"})
+        }
+
+        const question = interview.questions[questionIndex];
+
+        if(!question){
+            return res.status(400).json({message:"Invalid question index"})
+        }
+
         // If no answer 
             if(!answer){
                 question.score = 0;
@@ -244,41 +305,61 @@ export const submitAnswer = async(req,res) =>{
         content: `
 You are a professional human interviewer evaluating a candidate's answer in a real interview.
 
-Evaluate naturally and fairly, like a real person would.
+Evaluate naturally and fairly like a real interviewer.
 
 Score the answer in these areas (0 to 10):
 
-1. Confidence – Does the answer sound clear, confident, and well-presented?
-2. Communication – Is the language simple, clear, and easy to understand?
-3. Correctness – Is the answer accurate, relevant, and complete?
+1. Confidence - Does the answer sound clear, confident and well presented?
+2. Communication - Is the answer simple, structured and easy to understand?
+3. Correctness - Is the answer accurate, relevant and complete?
 
 Rules:
 - Be realistic and unbiased.
 - Do not give random high scores.
-- If the answer is weak, score low.
-- If the answer is strong and detailed, score high.
-- Consider clarity, structure, and relevance.
+- Weak answers should score low.
+- Strong answers should score high.
+- Consider clarity, structure and relevance.
 
 Calculate:
-finalScore = average of confidence, communication, and correctness (rounded to nearest whole number).
+finalScore = average of confidence, communication and correctness
+(round to nearest whole number)
 
 Feedback Rules:
-- Write natural human feedback.
-- 10 to 15 words only.
-- Sound like real interview feedback.
-- Can suggest improvement if needed.
-- Do NOT repeat the question.
-- Do NOT explain scoring.
-- Keep tone professional and honest.
+- Write natural human feedback
+- 10 to 15 words only
+- Professional and honest
+- Can suggest improvement
+- Do NOT repeat the question
+- Do NOT explain scoring
 
-Return ONLY valid JSON in this format:
+
+Improved Answer Rules:
+- Rewrite candidate answer into a stronger interview answer.
+- Keep same intent but improve structure, clarity and impact.
+- Concise but strong (50-100 words).
+- Use STAR method (Situation-Task-Action-Result) when the question calls for behavioral examples.
+- Sound like a good mid-level candidate.
+
+
+Ideal Answer Rules:
+- Generate ideal top-candidate answer.
+- Polished and impressive (80-150 words).
+- Include stronger reasoning, examples and depth when useful.
+- Use STAR method when behavioral questions require it.
+- Sound natural and interview-ready.
+- This should be what an excellent candidate would say.
+
+
+Return ONLY valid JSON in exactly this format:
 
 {
-  "confidence": number,
-  "communication": number,
-  "correctness": number,
-  "finalScore": number,
-  "feedback": "short human feedback"
+ "confidence": number,
+ "communication": number,
+ "correctness": number,
+ "finalScore": number,
+ "feedback": "short human feedback",
+ "improvedAnswer": "concise but strong rewritten answer (50-100 words)",
+ "idealAnswer": "polished impressive top candidate answer (80-150 words)"
 }
 `
       }
@@ -294,17 +375,34 @@ Answer: ${answer}
 
     const aiResponse = await askAi(messages)
 
-    const parsed = JSON.parse(aiResponse);
+    let parsed;
+    try {
+      const cleaned = aiResponse
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+      parsed = JSON.parse(cleaned);
+    } catch (err) {
+      console.error("AI JSON parse error:", err.message);
+      console.log("Raw AI response:", aiResponse);
+      return res.status(500).json({ message: "Invalid AI response format." });
+    }
 
     question.answer = answer;
     question.confidence = parsed.confidence;
     question.communication = parsed.communication;
     question.correctness = parsed.correctness;
-    question.score = parsed.score;
+    question.score = parsed.finalScore;
     question.feedback = parsed.feedback;
+    question.improvedAnswer = parsed.improvedAnswer || "";
+    question.idealAnswer = parsed.idealAnswer || "";
     await interview.save();
 
-    return res.status(200).json({feedback :parsed.feedback})
+    return res.status(200).json({
+      feedback: parsed.feedback,
+      improvedAnswer: parsed.improvedAnswer || "",
+      idealAnswer: parsed.idealAnswer || ""
+    })
 
 
 
@@ -316,7 +414,12 @@ Answer: ${answer}
 
 export const finishInterview = async(req,res) =>{
     try {
-        const [interviewId] = req.body
+        const { interviewId } = req.body;
+
+        if (!interviewId) {
+            return res.status(400).json({ message: "Interview ID is required." });
+        }
+
         const interview = await Interview.findById(interviewId);
 
         if(!interview){
@@ -330,7 +433,7 @@ export const finishInterview = async(req,res) =>{
         let totalCommunication = 0;
         let totalCorrectness = 0;
 
-        interview.question.forEach((q) =>{
+        interview.questions.forEach((q) =>{
             totalScore += q.score || 0;
             totalConfidence += q.confidence || 0;
             totalCommunication += q.communication || 0;
@@ -366,3 +469,57 @@ export const finishInterview = async(req,res) =>{
          return res.status(500).json({message:`failed to finish Interview ${error}`})
     }
 }
+
+
+export const getMyInterviews = async (req, res) => {
+    try {
+        const interviews = await Interview.find({ userId: req.userId })
+            .sort({ createdAt: -1 })
+            .select("role experience mode final score status createdAt");
+
+        return res.status(200).json(interviews);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+
+export const getInterviewReport = async (req, res) => {
+    try {
+        const interview = await Interview.findById(req.params.id);
+
+        if (!interview) {
+            return res.status(404).json({ message: "Interview not found" });
+        }
+
+        const questions = interview.questions || [];
+        const totalQuestions = questions.length;
+
+        let totalConfidence = 0;
+        let totalCommunication = 0;
+        let totalCorrectness = 0;
+
+        questions.forEach((q) => {
+            totalConfidence += q.confidence || 0;
+            totalCommunication += q.communication || 0;
+            totalCorrectness += q.correctness || 0;
+        });
+
+        const avgConfidence = totalQuestions ? totalConfidence / totalQuestions : 0;
+        const avgCommunication = totalQuestions ? totalCommunication / totalQuestions : 0;
+        const avgCorrectness = totalQuestions ? totalCorrectness / totalQuestions : 0;
+
+        return res.json({
+            finalScore: interview.finalScore, // already stored
+            confidence: Number(avgConfidence.toFixed(1)),
+            communication: Number(avgCommunication.toFixed(1)),
+            correctness: Number(avgCorrectness.toFixed(1)),
+            questionWiseScore: questions
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            message: `Failed to fetch interview report: ${error.message}`
+        });
+    }
+};

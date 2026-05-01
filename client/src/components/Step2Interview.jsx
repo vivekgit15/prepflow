@@ -15,8 +15,12 @@ const Step2Interview = ({ interviewData, onFinish }) => {
   const recognitionRef = useRef(null);
 
   const [isAIPlaying , setIsAIPlaying] = useState(false);
+  const [isListening , setIsListening] = useState(false);
   const [currentIndex , setCurrentIndex] = useState(0);
   const [answer , setAnswer] = useState("");
+  const [submittedAnswer, setSubmittedAnswer] = useState("");
+  const [improvedAnswer, setImprovedAnswer] = useState("");
+  const [idealAnswer, setIdealAnswer] = useState("");
   const [feedback , setFeedback] = useState("");
   const [timeLeft , setTimeLeft] = useState(questions[0]?.timeLeft || 60);
   const [selectedVoice , setSelectedVoice] = useState(null);
@@ -24,8 +28,10 @@ const Step2Interview = ({ interviewData, onFinish }) => {
   const [voiceGender , setVoiceGender] = useState("female");
   const [subtitle , setSubtitle] = useState("");
 
+
   const videoRef = useRef(null);
   const currentQuestion = questions[currentIndex];
+  const isLastQuestion = currentIndex === questions.length - 1;
 
 
   useEffect(() =>{
@@ -187,6 +193,34 @@ const Step2Interview = ({ interviewData, onFinish }) => {
 
 
 
+
+   useEffect(() => {
+    if (isIntroPhase || isSubmitting || !currentQuestion) return;
+    if (timeLeft !== 0) return;
+
+    const moveToNext = async () => {
+      stopMic();
+
+      if (isLastQuestion) {
+        await speakText("Time's up — finishing the interview.");
+        await finishInterview();
+        return;
+      }
+
+      await speakText("Time's up — moving to the next question.");
+      setAnswer("");
+      setFeedback("");
+      setCurrentIndex((prev) => prev + 1);
+    };
+
+    moveToNext();
+  }, [timeLeft, isIntroPhase, isSubmitting, currentQuestion, currentIndex, questions.length]);
+
+
+
+
+
+
 useEffect(() =>{
     if(!("webkitSpeechRecognition" in window)) return;
 
@@ -202,15 +236,24 @@ useEffect(() =>{
     recognitionRef.current = recognition;
 },[])
 
-const startMic = () =>{
-  if(recognitionRef.current && !isAIPlaying){
-    try {
-      recognitionRef.current.start();
-    } catch (error) {
-      console.log(error)
-    }
+const startMic = () => {
+  if (!recognitionRef.current || isAIPlaying || isListening) return;
+
+  try {
+    recognitionRef.current.start();
+    setIsListening(true);
+  } catch (error) {
+    console.log(error.message);
   }
-}
+};
+
+useEffect(() => {
+  if (!recognitionRef.current) return;
+
+  recognitionRef.current.onend = () => {
+    setIsListening(false);
+  };
+}, []);
 
 
 const stopMic = () =>{
@@ -244,151 +287,394 @@ const submitAnswer = async () =>{
       timeTaken: currentQuestion.timeLimit - timeLeft,
     }, { withCredentials:true })
 
-      setFeedback(result.data.feedback)
-      speakText(result.data.feedback)
-      setIsSubmitting(false)
-
+    setSubmittedAnswer(answer);
+    setFeedback(result.data.feedback)
+    setImprovedAnswer(result.data.improvedAnswer || "");
+    setIdealAnswer(result.data.idealAnswer || "");
+    speakText(result.data.feedback)
   } catch (error) {
     console.log(error)
+  } finally {
     setIsSubmitting(false)
   }
 }
 
-const handleNext = async () =>{
+const handleNext = async () => {
+  stopMic();
   setAnswer("");
   setFeedback("");
+  setSubmittedAnswer("");
+  setImprovedAnswer("");
+  setIdealAnswer("");
 
-  if(currentIndex + 1 >= questions.length){
-    await finishInterview();
-     return;
-  }
-  await speakText("Alright, let's move to the next question.")
-  setCurrentIndex(currentIndex + 1);
+  await speakText("Alright, let's move to the next question.");
+  setCurrentIndex((prev) => prev + 1);
+
   setTimeout(() => {
-    if(isMicOn) startMic();
-  },500)
- 
-}
+    if (isMicOn) startMic();
+  }, 500);
+};
 
+const handleFinishOrNext = async () => {
+  if (isLastQuestion) {
+    await finishInterview();
+    return;
+  }
 
-const finishInterview = async () =>{
-  stopMic()
-  setIsMicOn(false)
+  await handleNext();
+};
+
+const finishInterview = async () => {
+  stopMic();
+  setIsMicOn(false);
 
   try {
-    const result = await axios.post(ServerUrl + "/api/interview/finish",{interviewId} , {withCredentials:true});
-    console.log(result.data)
-    onFinish(result.data)
+    const result = await axios.post(
+      `${ServerUrl}/api/interview/finish`,
+      { interviewId },
+      { withCredentials: true }
+    );
+
+    console.log("Interview Finished:", result.data);
+
+    onFinish(result.data); // ✅ move to report screen
   } catch (error) {
-    console.log(error) 
+    console.log("Finish error:", error.response?.data || error.message);
   }
+};
+
+ return (
+<div className="min-h-screen bg-black text-white relative overflow-hidden">
+
+{/* Cyber Grid */}
+<div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] bg-[size:60px_60px]" />
+
+{/* Glow Effects */}
+<div className="absolute top-0 left-0 w-96 h-96 bg-green-500/20 blur-[140px] rounded-full"/>
+<div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-cyan-500/10 blur-[160px] rounded-full"/>
+
+<div className="relative z-10 max-w-7xl mx-auto px-6 py-10">
+
+{/* TOP SECTION */}
+<div className="grid lg:grid-cols-12 gap-8 min-h-[85vh]">
+
+{/* ================= LEFT PANEL ================= */}
+<div className="lg:col-span-5">
+
+<div className="rounded-[36px] bg-white/5 border border-white/10 backdrop-blur-2xl p-8 shadow-2xl">
+
+<div className="flex justify-between items-center mb-6">
+<h2 className="text-3xl font-bold">
+AI Interviewer
+</h2>
+
+<div className="text-green-400 text-sm">
+Live Session ●
+</div>
+</div>
+
+
+{/* Video */}
+<div className="rounded-[30px] overflow-hidden border border-green-500/20 shadow-[0_0_30px_rgba(34,197,94,.1)] mb-6">
+<video
+src={videoSource}
+key={videoSource}
+ref={videoRef}
+muted
+playsInline
+preload="auto"
+className="w-full object-cover"
+/>
+</div>
+
+
+{/* Subtitle */}
+{subtitle && (
+<div className="rounded-[24px] bg-green-500/5 border border-green-500/20 p-5 mb-6">
+<p className="text-green-200 text-center leading-relaxed">
+{subtitle}
+</p>
+</div>
+)}
+
+
+
+{/* Analytics */}
+<div className="rounded-[30px] bg-black/40 border border-white/10 p-8">
+
+<div className="flex justify-between items-center mb-6">
+<span className="text-zinc-500">
+Interview Status
+</span>
+
+{isAIPlaying && (
+<span className="text-green-400 font-semibold">
+AI Speaking
+</span>
+)}
+</div>
+
+
+<div className="mb-8 flex justify-center">
+<Timer
+timeLeft={timeLeft}
+totalTime={currentQuestion?.timeLimit || 60}
+/>
+</div>
+
+
+<div className="grid grid-cols-2 gap-6 text-center">
+
+<div className="rounded-2xl bg-white/5 p-5 border border-white/10">
+<div className="text-3xl font-bold text-green-400">
+{currentIndex + 1}
+</div>
+
+<p className="text-zinc-500 text-sm mt-2">
+Current Question
+</p>
+</div>
+
+
+<div className="rounded-2xl bg-white/5 p-5 border border-white/10">
+<div className="text-3xl font-bold text-cyan-400">
+{questions.length}
+</div>
+
+<p className="text-zinc-500 text-sm mt-2">
+Total Questions
+</p>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+{/* ================= RIGHT PANEL ================= */}
+<div className="lg:col-span-7">
+
+<div className="rounded-[40px] bg-white/5 border border-white/10 backdrop-blur-2xl p-8 h-full flex flex-col shadow-2xl">
+
+<div className="flex justify-between items-center mb-8">
+<h2 className="text-4xl font-bold">
+Interview Console
+</h2>
+
+<div className="text-green-400">
+Mic {isMicOn ? "Active" : "Muted"}
+</div>
+</div>
+
+
+
+{!isIntroPhase && (
+<div className="mb-8 rounded-[30px] bg-green-500/5 border border-green-500/20 p-7">
+<p className="text-sm text-zinc-500 mb-3">
+Question {currentIndex+1} of {questions.length}
+</p>
+
+<h3 className="text-2xl font-semibold leading-relaxed">
+{currentQuestion?.question}
+</h3>
+</div>
+)}
+
+
+
+{!feedback ? (
+
+<>
+<textarea
+value={answer}
+onChange={(e)=>setAnswer(e.target.value)}
+placeholder="Respond to the interviewer..."
+className="
+flex-1 min-h-[320px]
+rounded-[30px]
+bg-black/40
+border border-white/10
+p-7
+outline-none
+resize-none
+focus:border-green-500/30
+text-lg
+"
+/>
+
+
+
+<div className="flex items-center gap-5 mt-8">
+
+<button
+onClick={toggleMic}
+className="
+w-16 h-16
+rounded-full
+bg-gradient-to-r from-green-400 to-cyan-400
+text-black
+flex items-center justify-center
+"
+>
+{isMicOn
+? <FaMicrophone size={22}/>
+: <FaMicrophoneSlash size={22}/>
 }
-
-  return (
-    <div className="min-h-screen bg-linear-to-br from-emerald-50 via-white to-teal-100 flex items-center justify-center p-4 ">
-      <div className="w-full max-w-350 min-h-[80vh] bg-white rounded-3xl shadow-2xl border border-gray-200 flex flex-col lg:flex-row overflow-hidden">
-        <div className="w-full lg:w-[35%] bg-white flex flex-col items-center p-6 space-y-6 border-r border-gray-200">
-          <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-xl">
-            <video
-              src={videoSource}
-              key={videoSource}
-              ref={videoRef}
-              muted
-              playsInline
-              preload="auto"
-              className="w-full h-auto object-cover"
-            />
-          </div>
-
-          {/* subtitle pending */}
-
-          {subtitle && (
-            <div className="w-full max-w-md bg-gray-50 border border-gray-200 rounded-xl p-4 shadow-sm">
-              <p className="text-gray-700 text-sm sm:text-base font-medium text-center leading-relaxed">{subtitle}</p>
-            </div>
-          )}
-
-          {/* timer area */}
-          <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-md p-6 space-y-5">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">Inter view Status</span>
-              {isAIPlaying && <span className="text-sm font-semibold text-emerald-600">
-               {isAIPlaying ? "AI Speaking" : ""}
-              </span>}
-            </div>
-            <div className="h-px bg-gray-200"></div>
-            <div className="flex justify-center">
-              <Timer timeLeft={timeLeft} totalTime={currentQuestion?.timeLimit || 60} />
-            </div>
-
-            <div className="h-px bg-gray-200"></div>
-            <div className="grid grid-cols-2 gap-6 text-center">
-              <div>
-                <span className="text-2xl font-bold text-emerald-600">1</span>
-                <span className="text-xs text-gray-400">Current Questions</span>
-              </div>
-
-              <div>
-                <span className="text-2xl font-bold text-emerald-600"></span>
-                <span className="text-xs text-gray-400">Total Questions</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* text sectin */}
-
-        <div className="flex-1 flex flex-col p-4 sm:p-6 md:p-8 relative">
-          <h2 className="text-xl sm:text-2xl font-bold text-emerald-600 mb-6">
-            AI Smart Interview
-          </h2>
-
-    {!isIntroPhase && (<div className="relative mb-6 bg-gray-50 p-4 sm:p-6 riunded-2xl border border-gray-200 shadow-sm">
-          <p className="text-xs sm:text-sm text-gray-400 mb-2">
-          Question {currentIndex + 1} of {questions.length}
-          </p>
-          <div className="text-base sm:text-lg font-semibold text-gray-800 leading-relaxed">
-          {currentQuestion?.question}
-          </div>
-</div>)}
-            <textarea
-            onChange={(e) => setAnswer(e.target.value)}
-            value={answer}
-              placeholder="Type your answer here..."
-              className="flex-1 bg-gray-100 p-4 sm:p-6 rounded-2xl resize-none outline-none border border-gray-200 focus:ring-2 focus:ring-emerald-500 transition text-gray-800"
-            />
-
-           { !feedback ? (<div className="flex items-center gap-4 mt-6">
-              <button 
-              onClick={toggleMic}
-              className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-full bg-black text-white shadow-lg">
-                {isMicOn ? <FaMicrophone size={20}/> : <FaMicrophoneSlash size={20} />}
-              </button>
-
-              <button
-              onClick={submitAnswer}
-              disabled={isSubmitting}
-              className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-500 text-white py-3 sm:py-4 rounded-2xl shadow-lg hover:opacity-90 transition font-semibold disabled:bg-gray-500">
-              {isSubmitting ? "Submitting..." : "Submit Answer"}
-              </button>
-            
+</button>
 
 
-          </div>):(
-            <div className="mt-6 bg-emerald-50 border border-emerald-200 p-5 rounded-2xl shadow-sm">
-              <p className="text-emerald-700 font-medium mb-4">{feedback}</p>
+<button
+onClick={submitAnswer}
+disabled={isSubmitting}
+className="
+flex-1 py-5 rounded-2xl
+font-semibold text-lg
+bg-gradient-to-r from-green-400 to-cyan-400
+text-black
+"
+>
+{isSubmitting
+? "Analyzing Response..."
+: "Submit Answer"}
+</button>
 
-              <button 
-              onClick={handleNext}
-              className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white py-3 rounded-xl shadow-md hover:opacity-50 transition">
-                Next Question <BsArrowLeft size={20}/>
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+</div>
+
+</>
+
+) : (
+
+<div className="mt-4">
+
+<div className="rounded-[30px] bg-green-500/5 border border-green-500/20 p-7 mb-8">
+<h3 className="text-green-300 text-xl font-semibold mb-4">
+AI Feedback
+</h3>
+
+<p className="text-zinc-300 leading-8">
+{feedback}
+</p>
+</div>
+
+
+<button
+onClick={handleFinishOrNext}
+className="
+w-full py-5 rounded-2xl
+bg-gradient-to-r from-green-400 to-cyan-400
+text-black font-semibold text-lg
+"
+>
+{isLastQuestion
+? "Finish Interview"
+: "Next Question"}
+</button>
+
+</div>
+
+)}
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+{/* ================= FULL WIDTH ANSWER COMPARISON ================= */}
+{submittedAnswer && (
+<div className="mt-12">
+
+<div className="rounded-[40px] bg-white/5 border border-white/10 backdrop-blur-2xl p-8 shadow-2xl">
+
+<div className="flex justify-between items-center mb-8">
+<h2 className="text-3xl font-bold">
+Answer Comparison
+</h2>
+
+<div className="text-green-400">
+AI Evaluation Panel
+</div>
+</div>
+
+
+
+<div className="grid lg:grid-cols-3 gap-8">
+
+{/* YOUR ANSWER */}
+<div className="h-[700px] rounded-[32px] bg-zinc-900/80 border border-white/10 flex flex-col overflow-hidden">
+
+<div className="p-6 border-b border-white/10">
+<h3 className="text-xl font-bold">
+Your Answer
+</h3>
+</div>
+
+<div className="flex-1 overflow-y-auto p-7">
+<p className="leading-8 whitespace-pre-line text-zinc-300">
+{submittedAnswer}
+</p>
+</div>
+
+</div>
+
+
+
+{/* IMPROVED */}
+<div className="h-[700px] rounded-[32px] bg-gradient-to-b from-green-500/10 to-black/70 border border-green-500/20 flex flex-col overflow-hidden">
+
+<div className="p-6 border-b border-green-500/20">
+<h3 className="text-xl font-bold text-green-300">
+Improved Answer
+</h3>
+</div>
+
+<div className="flex-1 overflow-y-auto p-7">
+<p className="leading-8 whitespace-pre-line text-zinc-200">
+{improvedAnswer}
+</p>
+</div>
+
+</div>
+
+
+
+{/* IDEAL */}
+<div className="h-[700px] rounded-[32px] bg-gradient-to-b from-cyan-500/10 to-black/70 border border-cyan-500/20 flex flex-col overflow-hidden">
+
+<div className="p-6 border-b border-cyan-500/20">
+<h3 className="text-xl font-bold text-cyan-300">
+Ideal Answer
+</h3>
+</div>
+
+<div className="flex-1 overflow-y-auto p-7">
+<p className="leading-8 whitespace-pre-line text-zinc-200">
+{idealAnswer}
+</p>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+)}
+
+</div>
+
+</div>
+)
 };
 
 export default Step2Interview;

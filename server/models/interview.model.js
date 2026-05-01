@@ -9,7 +9,15 @@ const questionSchema = new mongoose.Schema({
     score:{type:Number , default:0},
     confidence:{type:Number, default:0},
     communication:{type:Number, default:0},
-    correctness:{type:Number, default:0}
+    correctness:{type:Number, default:0},
+    improvedAnswer:{
+        type:String,
+        default:"",
+    },
+    idealAnswer:{
+         type:String,
+        default:"",
+    }
 })
 
 const interviewSchema = new mongoose.Schema({
