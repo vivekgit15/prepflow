@@ -29,7 +29,9 @@ dispatch(setUserData(null))
 setShowCreditPopup(false)
 setShowUserPopup(false)
 navigate('/')
-} catch (error){}
+} catch (error){
+  console.log(error)
+}
 }
 
 return (
