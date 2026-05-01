@@ -40,133 +40,67 @@ const Auth = ({ isModel = false, onClose }) => {
   };
 
   return (
-    <div
-      className={`${
-        isModel ? "min-h-0 py-0" : "min-h-screen"
-      } flex items-center justify-center px-6`}
-    >
+    <div className="w-full max-h-[80vh] overflow-y-auto custom-scrollbar">
       <motion.div
-        initial={{ opacity: 0, y: 35 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="relative w-full max-w-md"
+        className="relative w-full"
       >
-        {/* Glow */}
-        <div className="absolute -inset-6 bg-green-500/10 blur-3xl rounded-full pointer-events-none" />
+        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-b from-zinc-950 to-black border border-green-500/20">
+          
+          {/* Neon strip - kept as is */}
+          <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-green-400 via-cyan-400 to-green-400" />
 
-        <div
-          className="
-          relative
-          overflow-hidden
-          rounded-[36px]
-          bg-gradient-to-b from-zinc-950 to-black
-          border border-green-500/20
-          shadow-[0_0_70px_rgba(0,0,0,.45)]
-        "
-        >
-          {/* CLOSE BUTTON */}
-          {isModel && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onClose();
-              }}
-              className="
-              absolute top-4 right-4 z-[9999]
-              w-10 h-10
-              rounded-full
-              bg-zinc-900
-              border border-green-400/30
-              text-green-300
-              flex items-center justify-center
-              hover:bg-green-500/20
-              hover:rotate-90
-              transition-all duration-300
-              cursor-pointer
-              "
-            >
-              ✕
-            </button>
-          )}
-
-          {/* Neon strip */}
-          <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-green-400 via-cyan-400 to-green-400" />
-
-          <div className="p-10">
-            {/* Logo */}
-            <div className="flex flex-col items-center text-center mb-10">
-              <div className="relative mb-6">
-                <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-green-400 to-cyan-400 text-black flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,.35)]">
-                  <BsRobot size={34} />
+          <div className="p-6 md:p-8"> {/* Reduced padding from p-10 */}
+            {/* Logo Section - Scaled Down */}
+            <div className="flex flex-col items-center text-center mb-6"> {/* Reduced margin */}
+              <div className="relative mb-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400 to-cyan-400 text-black flex items-center justify-center">
+                  <BsRobot size={24} />
                 </div>
-
-                <div className="absolute -inset-2 bg-green-400/20 blur-xl rounded-[30px] -z-10 pointer-events-none" />
               </div>
 
-              <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20">
-                <IoSparkles className="text-green-400" />
-                <span className="text-green-300 text-sm">
-                  Interview Intelligence Core
+              <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20">
+                <IoSparkles className="text-green-400" size={12} />
+                <span className="text-green-300 text-[10px] uppercase tracking-wider font-medium">
+                  Interview Intelligence
                 </span>
               </div>
 
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-                Launch
-                <span className="block mt-3 bg-gradient-to-r from-green-300 via-cyan-300 to-green-400 bg-clip-text text-transparent">
-                  AI Smart Interview
+              <h1 className="text-2xl md:text-3xl font-bold leading-tight">
+                Launch{" "}
+                <span className="bg-gradient-to-r from-green-300 to-cyan-300 bg-clip-text text-transparent">
+                  AI Interview
                 </span>
               </h1>
-
-              <p className="mt-6 text-zinc-500 leading-relaxed max-w-sm">
-                Authenticate to access adaptive interview simulations and AI
-                feedback engine.
-              </p>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-10">
-              <div className="rounded-2xl bg-white/5 border border-white/5 p-4 text-center">
-                <div className="text-xl font-bold text-green-400">10K+</div>
-                <div className="text-[11px] text-zinc-500 mt-1">
-                  Sessions
+            {/* Stats - More Compact */}
+            <div className="grid grid-cols-3 gap-2 mb-6">
+              {[
+                { label: "Sessions", val: "10K+", color: "text-green-400" },
+                { label: "Roles", val: "50+", color: "text-cyan-400" },
+                { label: "Adaptive", val: "AI", color: "text-green-300" }
+              ].map((stat, i) => (
+                <div key={i} className="rounded-xl bg-white/5 border border-white/5 p-2 text-center">
+                  <div className={`text-sm font-bold ${stat.color}`}>{stat.val}</div>
+                  <div className="text-[9px] text-zinc-500 uppercase">{stat.label}</div>
                 </div>
-              </div>
-
-              <div className="rounded-2xl bg-white/5 border border-white/5 p-4 text-center">
-                <div className="text-xl font-bold text-cyan-400">50+</div>
-                <div className="text-[11px] text-zinc-500 mt-1">
-                  Roles
-                </div>
-              </div>
-
-              <div className="rounded-2xl bg-white/5 border border-white/5 p-4 text-center">
-                <div className="text-xl font-bold text-green-300">AI</div>
-                <div className="text-[11px] text-zinc-500 mt-1">
-                  Adaptive
-                </div>
-              </div>
+              ))}
             </div>
 
-            {/* Login */}
+            {/* Login Button */}
             <motion.button
-              whileHover={{ scale: 1.03 }}
+              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleGoogleAuth}
-              className="group w-full rounded-2xl p-[1px] bg-gradient-to-r from-green-400 to-cyan-400 shadow-[0_0_35px_rgba(34,197,94,.25)]"
+              className="group w-full rounded-xl p-[1px] bg-gradient-to-r from-green-400 to-cyan-400"
             >
-              <div className="flex items-center justify-center gap-4 py-4 rounded-2xl bg-black text-white group-hover:bg-zinc-950 transition">
-                <FcGoogle size={22} />
-                <span className="font-semibold text-lg">
-                  Continue with Google
-                </span>
+              <div className="flex items-center justify-center gap-3 py-3 rounded-xl bg-black text-white group-hover:bg-zinc-950 transition">
+                <FcGoogle size={20} />
+                <span className="font-semibold text-base">Continue with Google</span>
               </div>
             </motion.button>
-
-            <div className="flex items-center justify-center gap-2 mt-8 text-xs text-zinc-600">
-              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              Secure Authentication Active
-            </div>
           </div>
         </div>
       </motion.div>
