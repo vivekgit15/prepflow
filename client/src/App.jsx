@@ -12,7 +12,7 @@ import InterviewReport from './pages/InterviewReport'
 import PricingPage from './pages/PricingPage'
 import InterviewHistory from './pages/InterviewHistory'
 
-export const ServerUrl = import.meta.env.VITE_SERVER_URL;
+export const ServerUrl = import.meta.env.VITE_SERVER_URL || "https://prepflow-tj85.onrender.com";
 
 const App = () => {
   const dispatch = useDispatch()

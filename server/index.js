@@ -19,8 +19,17 @@ const PORT = process.env.PORT || 3000
 app.use(express.json())
 app.use(cookieParser())
 
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:5173",
+  "https://prepflow-xi.vercel.app"
+]
+
 app.use(cors({
-    origin:"http://localhost:5173",
+    origin: function(origin, callback) {
+      if (!origin) return callback(null, true)
+      if (allowedOrigins.includes(origin)) return callback(null, true)
+      callback(new Error("Not allowed by CORS"))
+    },
     credentials:true
 }))
 

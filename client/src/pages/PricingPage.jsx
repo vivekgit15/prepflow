@@ -5,8 +5,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { setUserData } from "../redux/userSlice";
-
-const ServerUrl="http://localhost:5000";
+import { ServerUrl } from "../App";
 
 const PricingPage = () => {
 
