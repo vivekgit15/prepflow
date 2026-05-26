@@ -19,7 +19,6 @@ ServerUrl+"/api/interview/get-interview",
 {withCredentials:true}
 )
 
-console.log(result.data);
 
 setInterviews(result.data)
 
