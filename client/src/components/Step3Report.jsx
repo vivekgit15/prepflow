@@ -320,7 +320,7 @@ Question {i+1}
 </p>
 
 <h4 className="text-xl font-semibold">
-Response Analysis
+  {q.question || "No question"}
 </h4>
 </div>
 
