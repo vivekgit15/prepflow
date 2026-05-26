@@ -132,16 +132,30 @@ Overall Performance
 </h3>
 
 <div className="w-52 h-52 mx-auto">
-<CircularProgressbar
-value={percentage}
-text={`${finalScore}/10`}
-styles={buildStyles({
-pathColor:"#34d399",
-trailColor:"#111827",
-textColor:"#fff"
-})}
-/>
-</div>
+                <CircularProgressbar
+                  value={percentage}
+                  text={`${finalScore}/10`}
+                  strokeWidth={10}
+                  styles={{
+                    path: {
+                      stroke: "#34d399",
+                      strokeLinecap: "round",
+                    },
+
+                    trail: {
+                      stroke: "#111827",
+                    },
+
+                    text: {
+                      fill: "#ffffff",
+                      fontSize: "18px",
+                      fontWeight: "600",
+                      dominantBaseline: "middle",
+                      textAnchor: "middle",
+                    },
+                  }}
+                />
+              </div>
 
 <div className="text-center mt-8">
 <h3 className="text-2xl font-bold mb-3">
