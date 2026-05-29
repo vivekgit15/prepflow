@@ -480,7 +480,7 @@ const Step3Report = ({ report }) => {
                         </p>
 
                         <h4 className="text-xl font-semibold">
-                          Response Analysis
+                          {q.question}
                         </h4>
                       </div>
 
