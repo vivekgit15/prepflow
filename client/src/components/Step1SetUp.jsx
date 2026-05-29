@@ -101,54 +101,52 @@ const Step1SetUp = ({ onStart }) => {
 
 
     return (
-        <div className="min-h-screen bg-black text-white relative overflow-hidden">
+        <div className="min-h-screen bg-[#050505] text-white relative overflow-hidden font-sans">
 
-            {/* cyber grid */}
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] bg-[size:60px_60px]" />
+            {/* Cyber Grid Background */}
+            <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 opacity-[0.04] bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] bg-[size:60px_60px]" />
+                <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-green-500/5 blur-[140px] rounded-full" />
+                <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-cyan-500/5 blur-[140px] rounded-full" />
+            </div>
 
-            {/* glows */}
-            <div className="absolute top-0 left-0 w-96 h-96 bg-green-500/20 blur-[140px] rounded-full" />
-            <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-cyan-500/10 blur-[160px] rounded-full" />
+            <div className="relative z-10 max-w-6xl mx-auto px-6 py-16">
 
-            <div className="relative z-10 max-w-7xl mx-auto px-6 py-20">
+                <div className="grid lg:grid-cols-12 gap-8 items-start">
 
-                <div className="grid lg:grid-cols-12 gap-10">
-
-                    {/* LEFT COMMAND PANEL */}
-                    <div className="lg:col-span-5">
-                        <div className="flex items-center gap-4 mb-8">
+                    {/* ================= LEFT COMMAND PANEL ================= */}
+                    <div className="lg:col-span-5 space-y-6">
+                        <div className="flex items-center gap-4">
                             <button
                                 onClick={() => navigate("/")}
-                                className="w-14 h-14 rounded-2xl p-5 bg-white/5 border border-white/10
-      hover:border-green-500/30 backdrop-blur-xl transition flex items-center justify-center"
+                                className="w-12 h-12 rounded-xl bg-white/5 border border-white/10
+                                hover:border-green-500/20 backdrop-blur-xl transition flex items-center justify-center text-base"
                             >
                                 <FaArrowLeft />
                             </button>
 
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20">
-                                <HiSparkles className="text-green-400" />
-
-                                <span className="text-green-300 text-sm">
+                            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
+                                <HiSparkles className="text-green-400 text-sm" />
+                                <span className="text-green-300 text-xs tracking-wider uppercase font-semibold">
                                     Interview Initialization
                                 </span>
                             </div>
                         </div>
                         
-                        <h1 className="text-6xl font-bold leading-tight mb-8">
+                        <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-[1.1]">
                             Configure Your
-                            <span className="block bg-gradient-to-r from-green-300 via-cyan-300 to-green-500 bg-clip-text text-transparent">
+                            <span className="block bg-gradient-to-r from-green-300 via-cyan-300 to-green-500 bg-clip-text text-transparent mt-1">
                                 AI Mock Session
                             </span>
                         </h1>
 
-                        <p className="text-zinc-400 text-lg mb-12">
-                            Prepare realistic adaptive interviews powered by your role,
-                            resume and skills.
+                        <p className="text-zinc-400 text-base leading-relaxed max-w-md">
+                            Prepare realistic adaptive interviews powered by your target role, 
+                            resume analytics, and domain skillset.
                         </p>
 
-
-                        <div className="space-y-6">
-
+                        {/* Feature Mini Cards */}
+                        <div className="space-y-4 pt-3">
                             {[
                                 {
                                     icon: <FaUserTie />,
@@ -168,149 +166,97 @@ const Step1SetUp = ({ onStart }) => {
                             ].map((item, index) => (
                                 <div
                                     key={index}
-                                    className="rounded-[30px] bg-white/5 border border-white/10 p-7 backdrop-blur-2xl hover:border-green-500/30 transition"
+                                    className="rounded-2xl bg-white/[0.02] border border-white/5 p-6 backdrop-blur-2xl hover:border-green-500/10 transition duration-300"
                                 >
-                                    <div className="flex gap-5 items-start">
-                                        <div className="w-14 h-14 rounded-2xl bg-green-500/10 border border-green-500/20 text-green-400 flex items-center justify-center text-xl">
+                                    <div className="flex gap-4 items-center">
+                                        <div className="w-12 h-12 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 flex items-center justify-center text-lg shrink-0">
                                             {item.icon}
                                         </div>
 
                                         <div>
-                                            <h3 className="text-xl font-semibold mb-2">
+                                            <h3 className="text-base font-semibold text-zinc-200">
                                                 {item.title}
                                             </h3>
-                                            <p className="text-zinc-500">
+                                            <p className="text-sm text-zinc-500 mt-0.5">
                                                 {item.text}
                                             </p>
                                         </div>
                                     </div>
                                 </div>
                             ))}
-
                         </div>
-
                     </div>
 
-
-
-                    {/* RIGHT CONTROL PANEL */}
+                    {/* ================= RIGHT SETUP CONSOLE ================= */}
                     <div className="lg:col-span-7">
 
-                        <div className="rounded-[40px] bg-white/5 border border-white/10 backdrop-blur-2xl p-10 shadow-2xl">
+                        <div className="rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-2xl p-8 shadow-xl">
 
-                            <div className="flex items-center justify-between mb-10">
-                                <h2 className="text-4xl font-bold">
-                                    Interview Setup
+                            <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-5">
+                                <h2 className="text-xl font-bold text-zinc-100 tracking-tight">
+                                    Interview Workspace
                                 </h2>
-
-                                <div className="text-green-400 text-sm">
+                                <div className="text-green-400 text-xs font-semibold bg-green-500/5 border border-green-500/10 px-3 py-1 rounded-md">
                                     System Online ●
                                 </div>
                             </div>
 
+                            <div className="space-y-6">
 
-
-                            <div className="space-y-7">
-
-                                {/* role */}
+                                {/* Role Input */}
                                 <div>
-                                    <label className="text-zinc-500 text-sm mb-3 block">
+                                    <label className="text-zinc-400 text-xs font-bold mb-2.5 block uppercase tracking-wider">
                                         Target Role
                                     </label>
-
                                     <div className="relative">
-                                        <FaUserTie className="absolute left-5 top-5 text-zinc-500" />
-
+                                        <FaUserTie className="absolute left-4 top-4 text-zinc-500 text-base" />
                                         <input
                                             value={role}
                                             onChange={(e) => setRole(e.target.value)}
-                                            placeholder="Frontend Developer"
-                                            className="
-w-full
-pl-14 pr-5 py-4
-rounded-2xl
-bg-black/40
-border border-white/10
-outline-none
-focus:border-green-500/40
-"
+                                            placeholder="e.g., Frontend Developer"
+                                            className="w-full pl-12 pr-4 h-13 rounded-xl bg-black/40 border border-white/10 outline-none text-base text-zinc-200 focus:border-green-500/20 transition-all"
                                         />
                                     </div>
                                 </div>
 
-
-                                {/* exp */}
+                                {/* Experience Input */}
                                 <div>
-                                    <label className="text-zinc-500 text-sm mb-3 block">
-                                        Experience
+                                    <label className="text-zinc-400 text-xs font-bold mb-2.5 block uppercase tracking-wider">
+                                        Experience Level
                                     </label>
-
                                     <div className="relative">
-                                        <FaUserTie className="absolute left-5 top-5 text-zinc-500" />
-
+                                        <FaUserTie className="absolute left-4 top-4 text-zinc-500 text-base" />
                                         <input
                                             value={experience}
                                             onChange={(e) => setExperience(e.target.value)}
-                                            placeholder="2 Years"
-                                            className="
-w-full
-pl-14 pr-5 py-4
-rounded-2xl
-bg-black/40
-border border-white/10
-outline-none
-focus:border-green-500/40
-"
+                                            placeholder="e.g., Fresher / 2 Years"
+                                            className="w-full pl-12 pr-4 h-13 rounded-xl bg-black/40 border border-white/10 outline-none text-base text-zinc-200 focus:border-green-500/20 transition-all"
                                         />
                                     </div>
                                 </div>
 
-
-                                {/* mode */}
+                                {/* Mode Select */}
                                 <div>
-                                    <label className="text-zinc-500 text-sm mb-3 block">
+                                    <label className="text-zinc-400 text-xs font-bold mb-2.5 block uppercase tracking-wider">
                                         Interview Mode
                                     </label>
-
                                     <select
                                         value={mode}
                                         onChange={(e) => setMode(e.target.value)}
-                                        className="
-w-full py-4 px-5 rounded-2xl
-bg-black/40 border border-white/10
-outline-none
-"
+                                        className="w-full h-13 px-4 rounded-xl bg-black/40 border border-white/10 outline-none text-base text-zinc-300 focus:border-green-500/20 transition-all appearance-none cursor-pointer"
                                     >
-                                        <option value="Technical">
-                                            Technical Interview
-                                        </option>
-
-                                        <option value="HR">
-                                            HR Interview
-                                        </option>
+                                        <option value="Technical" className="bg-[#0f0f0f]">Technical Interview</option>
+                                        <option value="HR" className="bg-[#0f0f0f]">HR Interview</option>
                                     </select>
                                 </div>
 
-
-
-                                {/* upload */}
+                                {/* Upload Field */}
                                 {!analysisDone && (
                                     <div
                                         onClick={() => document.getElementById("resumeUpload").click()}
-                                        className="
-rounded-[30px]
-border-2 border-dashed border-green-500/30
-bg-green-500/5
-p-10
-text-center
-cursor-pointer
-hover:border-green-400
-transition
-"
+                                        className="rounded-xl border-2 border-dashed border-green-500/20 bg-green-500/[0.02] p-8 text-center cursor-pointer hover:border-green-500/40 transition duration-200 flex flex-col items-center justify-center min-h-[160px]"
                                     >
-
-                                        <FaFileUpload className="text-5xl mx-auto mb-5 text-green-400" />
-
+                                        <FaFileUpload className="text-4xl mb-4 text-green-400/80" />
                                         <input
                                             id="resumeUpload"
                                             type="file"
@@ -318,11 +264,8 @@ transition
                                             className="hidden"
                                             onChange={(e) => setResumeFile(e.target.files[0])}
                                         />
-
-                                        <p className="text-zinc-400 font-medium">
-                                            {resumeFile
-                                                ? resumeFile.name
-                                                : "Upload Resume (Optional)"}
+                                        <p className="text-sm text-zinc-300 font-medium">
+                                            {resumeFile ? resumeFile.name : "Upload Resume PDF (Optional)"}
                                         </p>
 
                                         {resumeFile && (
@@ -331,33 +274,25 @@ transition
                                                     e.stopPropagation()
                                                     handleResumeUpload()
                                                 }}
-                                                className="
-mt-6 px-7 py-3 rounded-2xl
-bg-gradient-to-r from-green-400 to-cyan-400
-text-black font-semibold
-"
+                                                className="mt-5 px-6 h-10 rounded-xl bg-gradient-to-r from-green-400 to-emerald-500 text-black font-bold text-sm tracking-wide shadow-md hover:opacity-90 transition-all"
                                             >
-                                                {analyzing ? "Analyzing..." : "Analyze Resume"}
+                                                {analyzing ? "Analyzing Stack..." : "Analyze File"}
                                             </button>
                                         )}
-
                                     </div>
                                 )}
 
-
-
-                                {/* analysis */}
+                                {/* Intelligence Output */}
                                 {analysisDone && skills.length > 0 && (
-                                    <div className="rounded-[30px] bg-white/5 border border-green-500/20 p-7">
-                                        <h3 className="text-xl font-semibold mb-5">
-                                            Resume Intelligence Output
+                                    <div className="rounded-xl bg-green-500/5 border border-green-500/10 p-6 animate-fadeIn">
+                                        <h3 className="text-xs font-bold text-green-400 uppercase tracking-wider mb-4">
+                                            Extracted Core Competencies
                                         </h3>
-
-                                        <div className="flex flex-wrap gap-3">
+                                        <div className="flex flex-wrap gap-2.5">
                                             {skills.map((skill, i) => (
                                                 <span
                                                     key={i}
-                                                    className="px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20 text-green-300 text-sm"
+                                                    className="px-3 py-1.5 rounded-md bg-green-500/10 border border-green-500/10 text-green-300 text-sm font-medium"
                                                 >
                                                     {skill}
                                                 </span>
@@ -366,25 +301,13 @@ text-black font-semibold
                                     </div>
                                 )}
 
-
-
+                                {/* Start Button */}
                                 <button
                                     onClick={handleStart}
                                     disabled={!role || !experience || loading}
-                                    className="
-w-full
-py-5
-rounded-2xl
-font-semibold text-lg
-bg-gradient-to-r from-green-400 to-cyan-400
-text-black
-disabled:opacity-50
-shadow-[0_0_35px_rgba(34,197,94,.35)]
-hover:scale-[1.01]
-transition
-"
+                                    className="w-full h-13 mt-4 rounded-xl font-bold text-base bg-gradient-to-r from-green-400 to-cyan-400 text-black shadow-lg shadow-green-500/10 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition duration-200"
                                 >
-                                    {loading ? "Initializing..." : "Start Interview"}
+                                    {loading ? "Calibrating Environment..." : "Start Assessment Session"}
                                 </button>
 
                             </div>
@@ -401,4 +324,4 @@ transition
     )
 }
 
-export default Step1SetUp
+export default Step1SetUp;
