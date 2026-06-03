@@ -11,6 +11,7 @@ import { ServerUrl } from "../App";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from "../redux/userSlice";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const Step1SetUp = ({ onStart }) => {
 
@@ -61,43 +62,62 @@ const Step1SetUp = ({ onStart }) => {
     }
 
 
-    const handleStart = async () => {
-        setLoading(true)
+   const handleStart = async () => {
 
-        try {
-            const result = await axios.post(
-                ServerUrl + "/api/interview/generate-questions",
-                {
-                    role,
-                    experience,
-                    mode,
-                    resumeText,
-                    projects,
-                    skills
-                },
-                {
-                    withCredentials: true
-                }
-            )
-
-            if (userData) {
-                dispatch(
-                    setUserData({
-                        ...userData,
-                        credits: result.data.creditsLeft
-                    })
-                )
-            }
-
-            onStart?.(result.data)
-
-        } catch (error) {
-            console.log(error)
-        }
-        finally {
-            setLoading(false)
-        }
+    if (userData?.credits <= 0) {
+        toast.error("You have no credits remaining. Please upgrade your plan.");
+        return;
     }
+
+    if (userData?.credits <= 2) {
+        toast("⚠ Warning: Only a few credits remaining.");
+    }
+
+    setLoading(true);
+
+    try {
+        const result = await axios.post(
+            ServerUrl + "/api/interview/generate-questions",
+            {
+                role,
+                experience,
+                mode,
+                resumeText,
+                projects,
+                skills
+            },
+            {
+                withCredentials: true
+            }
+        );
+
+        if (userData) {
+            dispatch(
+                setUserData({
+                    ...userData,
+                    credits: result.data.creditsLeft
+                })
+            );
+        }
+
+        toast.success("Interview created successfully!");
+
+        onStart?.(result.data);
+
+    } catch (error) {
+
+        if (error.response?.status === 403) {
+            toast.error("Insufficient credits.");
+        } else {
+            toast.error("Failed to start interview.");
+        }
+
+        console.log(error);
+
+    } finally {
+        setLoading(false);
+    }
+};
 
 
     return (
