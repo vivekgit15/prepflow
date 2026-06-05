@@ -55,10 +55,19 @@ const Navbar = () => {
       }
     };
 
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setShowCreditPopup(false);
+        setShowUserPopup(false);
+      }
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, []);
 
@@ -135,7 +144,7 @@ backdrop-blur-xl
           {userData ? (
             <>
               {/* Credits */}
-              <div className="relative" ref={userPopupRef}>
+              <div className="relative" ref={creditPopupRef}>
                 <button
                   onClick={() => {
                     setShowCreditPopup(!showCreditPopup);
@@ -194,7 +203,10 @@ p-6
                     </div>
 
                     <button
-                      onClick={() => navigate("/pricing")}
+                      onClick={() => {
+                        setShowCreditPopup(false);
+                        navigate("/pricing");
+                      }}
                       className="
 w-full py-3 rounded-2xl
 bg-gradient-to-r from-green-400 to-cyan-400
@@ -210,22 +222,22 @@ transition
               </div>
 
               {/* USER */}
-              <div className="relative">
+              <div className="relative" ref={userPopupRef}>
                 <button
                   onClick={() => {
                     setShowUserPopup(!showUserPopup);
                     setShowCreditPopup(false);
                   }}
                   className="
-relative
-w-11 h-11 rounded-2xl
-bg-gradient-to-br from-zinc-800 to-black
-border border-green-500/30
-text-green-300 font-semibold
-shadow-[0_0_20px_rgba(34,197,94,.18)]
-hover:scale-105
-transition
-"
+                              relative
+                              w-11 h-11 rounded-2xl
+                              bg-gradient-to-br from-zinc-800 to-black
+                              border border-green-500/30
+                              text-green-300 font-semibold
+                              shadow-[0_0_20px_rgba(34,197,94,.18)]
+                              hover:scale-105
+                              transition
+                              "
                 >
                   {userData?.name?.slice(0, 1).toUpperCase()}
                 </button>
@@ -233,14 +245,14 @@ transition
                 {showUserPopup && (
                   <div
                     className="
-absolute right-0 mt-4 w-64
-rounded-[28px]
-bg-zinc-950/95
-border border-white/10
-backdrop-blur-2xl
-shadow-2xl
-p-6
-"
+                              absolute right-0 mt-4 w-64
+                              rounded-[28px]
+                              bg-zinc-950/95
+                              border border-white/10
+                              backdrop-blur-2xl
+                              shadow-2xl
+                              p-6
+                              "
                   >
                     <div className="pb-5 border-b border-white/5">
                       <p className="text-green-300 font-semibold text-lg">
@@ -256,15 +268,18 @@ p-6
 
                     <div className=" space-y-2">
                       <button
-                        onClick={() => navigate("/history")}
+                        onClick={() => {
+                          setShowUserPopup(false);
+                          navigate("/history");
+                        }}
                         className="
-w-full text-left
-p-3 rounded-2xl
-bg-white/5
-hover:bg-white/10
-transition
-text-zinc-300
-"
+                                w-full text-left
+                                p-3 rounded-2xl
+                                bg-white/5
+                                hover:bg-white/10
+                                transition
+                                text-zinc-300
+                                "
                       >
                         Interview History
                       </button>
@@ -272,13 +287,13 @@ text-zinc-300
                       <button
                         onClick={handleLogout}
                         className="
-w-full text-left
-p-3 rounded-2xl
-bg-red-500/10
-hover:bg-red-500/20
-transition
-text-red-400
-"
+                                    w-full text-left
+                                    p-3 rounded-2xl
+                                    bg-red-500/10
+                                    hover:bg-red-500/20
+                                    transition
+                                    text-red-400
+                                    "
                       >
                         Logout
                       </button>
@@ -289,15 +304,16 @@ text-red-400
             </>
           ) : (
             <button
-              onClick={() => setShowAuth(true)}
-              className="
-px-7 py-3 rounded-2xl
-bg-gradient-to-r from-green-400 to-cyan-400
-text-black font-semibold
-shadow-[0_0_25px_rgba(34,197,94,.3)]
-hover:scale-105
-transition
-"
+              onClick={() => {
+                setShowAuth(true);
+              }}
+              className=" px-7 py-3 rounded-2xl
+                      bg-gradient-to-r from-green-400 to-cyan-400
+                      text-black font-semibold
+                      shadow-[0_0_25px_rgba(34,197,94,.3)]
+                      hover:scale-105
+                      transition
+                      "
             >
               Sign Up
             </button>
